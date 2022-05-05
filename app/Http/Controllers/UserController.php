@@ -12,84 +12,91 @@ use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
-    public function login( Request $request ){
+    // * LOGIN API
+    public function login(Request $request)
+    {
 
-        $validator = Validator::make($request->all(),[
-            'email'=>'required|string|email',
-            'password'=>'required|string',
-        ]);    
-        
+        // * CHECK FOR VALIDATION
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|string|email',
+            'password' => 'required|string',
+        ]);
+
+        // * IF ERROR EXIST RETURN ERROR
         if ($validator->fails()) {
-
-            return ( new ValidationCollection($validator->errors()->all()) )
-            ->response()
-            ->setStatusCode(400);
-
+            return (new ValidationCollection($validator->errors()->all()))
+                ->response()
+                ->setStatusCode(400);
         }
 
-        $user = User::where('email',$request->email)->first();
-        if (!$user || !Hash::check($request->password,$user->password)) {
-            return ( new ErrorCollection(['Invalid Password']) )
-            ->response()
-            ->setStatusCode(403);
+        // * CHECK IF USER EXIST
+        $user = User::where('email', $request->email)->first();
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return (new ErrorCollection(['Invalid Password']))
+                ->response()
+                ->setStatusCode(403);
         }
-        
-        $token = $user->createToken('myAppToken')->plainTextToken;
+
+        // * RETURN TOKEN AND USER DATA
+        $token = $user->createToken('token')->plainTextToken;
         $response = [
-            'user'=>$user,
-            'token'=>$token,
+            'user' => $user,
+            'accessToken' => $token,
         ];
-        return ( new ResponseCollection($response) )
+        return (new ResponseCollection($response))
             ->response()
             ->setStatusCode(200);
-        
     }
 
-    public function logout( Request $request ){
+    // * LOGOUT API
+    public function logout()
+    {
 
         auth()->user()->tokens()->delete();
 
         return [
-            'message'=>'Logged Out'
+            'message' => 'Logged Out'
         ];
-        
     }
-    
-    public function store( Request $request ){
+
+
+    // * REGISTER API
+    public function register(Request $request)
+    {
 
         $validator = Validator::make($request->all(), [
-            'name'=>'required|string',
-            'email'=>'required|string|email|unique:users,email',
-            'password'=>'required|string|confirmed',
-            'role'=>'required',
-        ]);    
-        
+            'name' => 'required|string',
+            'email' => 'required|string|email|unique:users,email',
+            'password' => 'required|string',
+            'role' => 'required',
+        ]);
+
+        // * IF ERROR EXIST RETURN ERROR
         if ($validator->fails()) {
-
-            return ( new ValidationCollection($validator->errors()->all()) )
-            ->response()
-            ->setStatusCode(400);
-
+            return (new ValidationCollection($validator->errors()->all()))
+                ->response()
+                ->setStatusCode(400);
         }
 
+        // * CREATE USER
         $user = User::create([
-            'name'=>$request->name,
-            'email'=>$request->email,
-            'password'=>Hash::make($request->password),
-            'name'=>$request->name,
-            'role'=>$request->role,
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'name' => $request->name,
+            'role' => $request->role,
         ]);
-        
-        $token = $user->createToken('myAppToken')->plainTextToken;
+
+        // * RETURN TOKEN AND USER DATA
+        $token = $user->createToken('token')->plainTextToken;
 
         $response = [
-            'user'=>$user,
-            'token'=>$token,
+            'user' => $user,
+            'accessToken' => $token,
         ];
 
-        return ( new ResponseCollection( $response ) )
-        ->response()
-        ->setStatusCode( 200 );
-        
+        return (new ResponseCollection($response))
+            ->response()
+            ->setStatusCode(200);
     }
 }
